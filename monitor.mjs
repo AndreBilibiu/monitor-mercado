@@ -101,12 +101,13 @@ function avaliar(dados) {
   const alertas = [];
 
   if (Math.abs(dados.var24h) >= r.variacao24hPct) {
-    // Movimento grande tem regra própria: assim ele avisa de novo mesmo que um alerta normal tenha saído há pouco.
-    const grande = Math.abs(dados.var24h) >= (r.movimentoGrandePct ?? 10);
+    // Cada faixa (pequena, média, grande) tem regra própria: se o movimento escalar, avisa de novo mesmo dentro do cooldown.
+    const abs = Math.abs(dados.var24h);
+    const nivel = abs >= (r.movimentoGrandePct ?? 10) ? "Grande" : abs >= (r.variacaoMediaPct ?? 5) ? "Media" : "";
     alertas.push({
-      regra: `${dados.var24h > 0 ? "alta" : "queda"}24h${grande ? "Grande" : ""}`,
+      regra: `${dados.var24h > 0 ? "alta" : "queda"}24h${nivel}`,
       mov24h: true,
-      grande,
+      nivel,
       texto: `${dados.var24h > 0 ? "📈 Alta" : "📉 Queda"} de ${pct(dados.var24h)} em 24h`,
     });
   }
@@ -202,9 +203,9 @@ async function checar() {
       let titulo = `${ativo.simbolo}  ${valor(dados, dados.preco)}`;
       const linhas = [];
       if (mov) {
-        titulo = `${ativo.simbolo} ${verbo}${mov.grande ? " muito" : ""}`;
+        titulo = `${ativo.simbolo} ${verbo}${{ Media: " bastante", Grande: " muito" }[mov.nivel] ?? ""}`;
         linhas.push(
-          mov.grande
+          mov.nivel
             ? `${ativo.simbolo} ${verbo} de ${valor(dados, dados.preco24hAtras)} para ${valor(dados, dados.preco)} (${pct(dados.var24h)} em 24h)`
             : `Agora em ${valor(dados, dados.preco)} (${pct(dados.var24h)} em 24h)`,
         );
@@ -218,7 +219,7 @@ async function checar() {
       const caiu = mov ? dados.var24h < 0 : novos.some((a) => /rsiBaixo|distMaxima/.test(a.regra));
       await notificar(titulo, msg, {
         tags: [caiu ? "chart_with_downwards_trend" : "chart_with_upwards_trend"],
-        prioridade: mov?.grande ? 5 : 4,
+        prioridade: { Grande: 5, Media: 4 }[mov?.nivel] ?? 3,
       });
       for (const a of novos) estado[`${ativo.simbolo}:${a.regra}`] = agora;
     } catch (e) {
