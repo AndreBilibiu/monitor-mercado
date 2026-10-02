@@ -39,3 +39,16 @@ O computador precisa ficar ligado com o script rodando. Para deixar 24h, o ideal
 - O `.env` já está no `.gitignore`.
 - RSI e variação são indicadores do passado. Servem para chamar sua atenção, não para decidir sozinhos.
 - Informativo automático, não é recomendação de investimento.
+
+## Onde cada coisa fica
+
+- **Esta pasta (`mercado/`)** é a cópia principal, guardada no repositório privado `telecurso-claudemir`. Edite aqui.
+- **Nuvem**: o repositório público `AndreBilibiu/monitor-mercado` roda o monitor a cada 10 minutos pelo GitHub Actions. Ele recebe uma cópia dos arquivos desta pasta (sem o `.env`).
+- **`.env`** (tópico do ntfy) fica só no seu PC e nunca vai para o git. Na nuvem, o tópico está em *Secrets* (`NTFY_TOPIC`).
+- Teste local sem enviar notificação: `DRY_RUN=1 node mercado/monitor.mjs --uma-vez`.
+
+## Alvo de preço (aviso de compra)
+
+Em `alvosDePreco` do `config.json` você define um preço-alvo. Hoje: BTC em reais (par `BTCBRL`) **abaixo de R$ 400.000**.
+Quando o preço chega ao alvo, o aviso sai com prioridade máxima no ntfy e repete a cada `repeteACadaMinutos` (mínimo prático: o intervalo do agendamento, hoje 10 min), até `maximoDeAvisos`. Se o preço sair do alvo e voltar, a contagem recomeça.
+Para mudar o valor, edite `valor`. Para um alvo de venda, use `"condicao": "acima"`.

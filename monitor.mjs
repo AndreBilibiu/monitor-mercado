@@ -182,6 +182,39 @@ async function notificar(titulo, mensagem, { tags = [], prioridade = 3 } = {}) {
   if (!r.ok) throw new Error(`ntfy ${r.status}: ${await r.text()}`);
 }
 
+// ---------- Alvos de preço (ex.: BTC a R$ 400.000 ou menos) ----------
+
+// Quando o preço está no alvo, avisa com prioridade máxima e repete a cada `repeteACadaMinutos`,
+// até `maximoDeAvisos`. Se o preço sair do alvo e voltar, a contagem recomeça.
+async function checarAlvos(estado, agora) {
+  for (const alvo of config.alvosDePreco ?? []) {
+    try {
+      const preco = Number((await binance(`/api/v3/ticker/price?symbol=${alvo.par}`)).price);
+      const atingiu = alvo.condicao === "abaixo" ? preco <= alvo.valor : preco >= alvo.valor;
+      const chave = `alvo:${alvo.par}:${alvo.condicao}:${alvo.valor}`;
+      const fmt = (v) => valor({ moeda: alvo.moeda }, v);
+      log(`Alvo ${alvo.simbolo} ${alvo.condicao} de ${fmt(alvo.valor)}: preço ${fmt(preco)} ${atingiu ? "NO ALVO" : "fora do alvo"}`);
+
+      if (!atingiu) {
+        delete estado[chave];
+        continue;
+      }
+      const s = estado[chave] ?? { avisos: 0, ultimo: 0 };
+      const maximo = alvo.maximoDeAvisos ?? 6;
+      if (s.avisos >= maximo || agora - s.ultimo < (alvo.repeteACadaMinutos ?? 5) * 60_000) continue;
+
+      await notificar(`🚨 ${alvo.simbolo} NO ALVO: ${fmt(preco)}`, [
+        `${alvo.simbolo} está em ${fmt(preco)}, ${alvo.condicao} do seu alvo de ${fmt(alvo.valor)}.`,
+        `Aviso ${s.avisos + 1} de ${maximo}. Repete a cada ${alvo.repeteACadaMinutos ?? 5} min enquanto o preço estiver no alvo.`,
+        "\nInformativo automático, não é recomendação de investimento.",
+      ].join("\n"), { tags: ["rotating_light", "moneybag"], prioridade: 5 });
+      estado[chave] = { avisos: s.avisos + 1, ultimo: agora };
+    } catch (e) {
+      log(`Erro no alvo ${alvo.simbolo}:`, e.message);
+    }
+  }
+}
+
 // ---------- Ciclo ----------
 
 async function checar() {
@@ -226,6 +259,7 @@ async function checar() {
       log(`Erro em ${ativo.simbolo}:`, e.message);
     }
   }
+  await checarAlvos(estado, agora);
   await writeFile(ESTADO, JSON.stringify(estado, null, 2));
 }
 

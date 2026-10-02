@@ -11,6 +11,17 @@
     "rsiAlto": 70,
     "quedaDaMaxima30dPct": 20
   },
+  "alvosDePreco": [
+    {
+      "simbolo": "BTC",
+      "par": "BTCBRL",
+      "condicao": "abaixo",
+      "valor": 400000,
+      "moeda": "R$",
+      "repeteACadaMinutos": 5,
+      "maximoDeAvisos": 6
+    }
+  ],
   "ativos": [
     {
       "simbolo": "BTC",
