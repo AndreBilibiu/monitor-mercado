@@ -42,6 +42,7 @@ async function dadosCripto({ par }) {
   ]);
   return {
     preco: Number(t24.lastPrice),
+    preco24hAtras: Number(t24.openPrice),
     var24h: Number(t24.priceChangePercent),
     fechamentos: candles.map((c) => Number(c[4])),
     maximas: candles.map((c) => Number(c[2])),
@@ -62,6 +63,7 @@ async function dadosAcao({ ticker }) {
   const anterior = fechamentos.at(-2); // chartPreviousClose do Yahoo é o fechamento antes do período inteiro, não o de ontem
   return {
     preco,
+    preco24hAtras: anterior,
     var24h: ((preco - anterior) / anterior) * 100,
     fechamentos,
     maximas,
@@ -91,14 +93,20 @@ function rsi(fechamentos, periodo = 14) {
 
 // ---------- Regras ----------
 
+const pct = (n) => `${n >= 0 ? "+" : ""}${n.toFixed(2).replace(".", ",")}%`;
+const valor = (dados, v) => dados.moeda + v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
 function avaliar(dados) {
   const r = config.regras;
   const alertas = [];
-  const pct = (n) => `${n >= 0 ? "+" : ""}${n.toFixed(2)}%`;
 
   if (Math.abs(dados.var24h) >= r.variacao24hPct) {
+    // Movimento grande tem regra própria: assim ele avisa de novo mesmo que um alerta normal tenha saído há pouco.
+    const grande = Math.abs(dados.var24h) >= (r.movimentoGrandePct ?? 10);
     alertas.push({
-      regra: dados.var24h > 0 ? "alta24h" : "queda24h",
+      regra: `${dados.var24h > 0 ? "alta" : "queda"}24h${grande ? "Grande" : ""}`,
+      mov24h: true,
+      grande,
       texto: `${dados.var24h > 0 ? "📈 Alta" : "📉 Queda"} de ${pct(dados.var24h)} em 24h`,
     });
   }
@@ -163,6 +171,7 @@ Alertas disparados: ${alertas.map((a) => a.texto).join("; ")}`;
 
 // Publicação em JSON para aceitar acentos e emojis no título.
 async function notificar(titulo, mensagem, { tags = [], prioridade = 3 } = {}) {
+  if (process.env.DRY_RUN) return console.log(`[simulação] ${titulo}\n${mensagem}\n`);
   if (!NTFY_TOPIC) throw new Error("Defina NTFY_TOPIC no .env");
   const r = await fetch("https://ntfy.sh/", {
     method: "POST",
@@ -187,14 +196,29 @@ async function checar() {
       if (!novos.length) continue;
 
       const resumo = await resumoClaude(ativo, dados, novos);
+      // Alerta de movimento: "BTC baixou". Se for movimento grande: "BTC baixou de X para Y".
+      const mov = novos.find((a) => a.mov24h);
+      const verbo = dados.var24h > 0 ? "subiu" : "baixou";
+      let titulo = `${ativo.simbolo}  ${valor(dados, dados.preco)}`;
+      const linhas = [];
+      if (mov) {
+        titulo = `${ativo.simbolo} ${verbo}${mov.grande ? " muito" : ""}`;
+        linhas.push(
+          mov.grande
+            ? `${ativo.simbolo} ${verbo} de ${valor(dados, dados.preco24hAtras)} para ${valor(dados, dados.preco)} (${pct(dados.var24h)} em 24h)`
+            : `Agora em ${valor(dados, dados.preco)} (${pct(dados.var24h)} em 24h)`,
+        );
+      }
+      linhas.push(...novos.filter((a) => !a.mov24h).map((a) => a.texto));
       const msg = [
-        ...novos.map((a) => a.texto),
-        resumo ? `\n${resumo}` : "",
+        ...linhas,
+        ...(resumo ? [`\n${resumo}`] : []),
         "\nInformativo automático, não é recomendação de investimento.",
       ].join("\n");
-      await notificar(`${ativo.simbolo}  ${dados.moeda}${dados.preco.toFixed(2)}`, msg, {
-        tags: [novos.some((a) => /queda|rsiBaixo|distMaxima/.test(a.regra)) ? "chart_with_downwards_trend" : "chart_with_upwards_trend"],
-        prioridade: 4,
+      const caiu = mov ? dados.var24h < 0 : novos.some((a) => /rsiBaixo|distMaxima/.test(a.regra));
+      await notificar(titulo, msg, {
+        tags: [caiu ? "chart_with_downwards_trend" : "chart_with_upwards_trend"],
+        prioridade: mov?.grande ? 5 : 4,
       });
       for (const a of novos) estado[`${ativo.simbolo}:${a.regra}`] = agora;
     } catch (e) {
