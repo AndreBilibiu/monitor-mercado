@@ -11,6 +11,18 @@
     "rsiAlto": 70,
     "quedaDaMaxima30dPct": 20
   },
+  "sinais": {
+    "ativo": true,
+    "minCondicoes": 2,
+    "percentilMax": 20,
+    "rsiMax": 35,
+    "quedaMaximaPct": 20,
+    "horizontesDias": [
+      30,
+      90
+    ],
+    "cooldownHoras": 24
+  },
   "alvosDePreco": [
     {
       "simbolo": "BTC",
@@ -26,12 +38,14 @@
     {
       "simbolo": "BTC",
       "tipo": "cripto",
-      "par": "BTCUSDT"
+      "par": "BTCUSDT",
+      "parBRL": "BTCBRL"
     },
     {
       "simbolo": "ETH",
       "tipo": "cripto",
-      "par": "ETHUSDT"
+      "par": "ETHUSDT",
+      "parBRL": "ETHBRL"
     }
   ]
 }

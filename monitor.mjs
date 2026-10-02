@@ -7,6 +7,7 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
+import { analisar, linhaLeitura, textoSinal } from "./analise.mjs";
 
 const DIR = dirname(fileURLToPath(import.meta.url));
 const ESTADO = join(DIR, "estado.json");
@@ -215,6 +216,28 @@ async function checarAlvos(estado, agora) {
   }
 }
 
+// ---------- Alerta de oportunidade (análise do histórico completo) ----------
+
+async function alertaOportunidade(ativo, dados, a, estado, agora) {
+  const cfg = config.sinais;
+  log(`${ativo.simbolo} análise: ${a.nCond}/3 condições, percentil ${a.pct.toFixed(0)}, RSI ${a.rsi.toFixed(0)}, leitura ${a.leitura}`);
+  if (a.nCond < cfg.minCondicoes) return;
+
+  const chave = `sinal:${ativo.simbolo}:${a.nCond}`;
+  if (agora - (estado[chave] ?? 0) < cfg.cooldownHoras * 3600_000) return;
+
+  let precoTxt = valor(dados, a.preco);
+  if (ativo.parBRL) {
+    const brl = Number((await binance(`/api/v3/ticker/price?symbol=${ativo.parBRL}`)).price);
+    precoTxt = `${valor({ moeda: "R$" }, brl)} (${precoTxt})`;
+  }
+  await notificar(`📊 ${ativo.simbolo}: preço baixo · leitura ${a.leitura.toLowerCase()}`, textoSinal(a, cfg, precoTxt), {
+    tags: ["bar_chart"],
+    prioridade: a.leitura === "FAVORÁVEL" ? (a.nCond >= 3 ? 5 : 4) : 3,
+  });
+  estado[chave] = agora;
+}
+
 // ---------- Ciclo ----------
 
 async function checar() {
@@ -227,6 +250,17 @@ async function checar() {
       const dados = await (ativo.tipo === "cripto" ? dadosCripto(ativo) : dadosAcao(ativo));
       const novos = avaliar(dados).filter((a) => agora - (estado[`${ativo.simbolo}:${a.regra}`] ?? 0) >= cooldownMs);
       log(`${ativo.simbolo} ${dados.moeda}${dados.preco.toFixed(2)} var24h=${dados.var24h.toFixed(2)}% rsi=${dados.rsi?.toFixed(0)} alertas=${novos.length}`);
+
+      // Análise do histórico completo da moeda (só cripto, e só se "sinais.ativo" estiver ligado no config)
+      let analise = null;
+      if (ativo.tipo === "cripto" && config.sinais?.ativo) {
+        try {
+          analise = await analisar(ativo.par, config.sinais);
+          await alertaOportunidade(ativo, dados, analise, estado, agora);
+        } catch (e) {
+          log(`Análise de ${ativo.simbolo} indisponível:`, e.message);
+        }
+      }
       if (!novos.length) continue;
 
       const resumo = await resumoClaude(ativo, dados, novos);
@@ -246,6 +280,7 @@ async function checar() {
       linhas.push(...novos.filter((a) => !a.mov24h).map((a) => a.texto));
       const msg = [
         ...linhas,
+        ...(analise ? [`\n${linhaLeitura(analise)}`] : []),
         ...(resumo ? [`\n${resumo}`] : []),
         "\nInformativo automático, não é recomendação de investimento.",
       ].join("\n");

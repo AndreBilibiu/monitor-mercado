@@ -52,3 +52,13 @@ O computador precisa ficar ligado com o script rodando. Para deixar 24h, o ideal
 Em `alvosDePreco` do `config.json` você define um preço-alvo. Hoje: BTC em reais (par `BTCBRL`) **abaixo de R$ 400.000**.
 Quando o preço chega ao alvo, o aviso sai com prioridade máxima no ntfy e repete a cada `repeteACadaMinutos` (mínimo prático: o intervalo do agendamento, hoje 10 min), até `maximoDeAvisos`. Se o preço sair do alvo e voltar, a contagem recomeça.
 Para mudar o valor, edite `valor`. Para um alvo de venda, use `"condicao": "acima"`.
+
+## Sinais de oportunidade (análise do histórico completo)
+
+`analise.mjs` baixa todo o histórico diário da moeda na Binance (BTC e ETH desde 2017) e mede 3 condições de "preço baixo": preço entre os 20% mais baratos do último ano, RSI(14) ≤ 35 e queda de 20% ou mais da máxima de 90 dias (ajustável em `sinais` no `config.json`).
+
+- **Alerta separado**: quando 2 ou mais condições batem, chega "📊 BTC: preço baixo · leitura ...", com o que aconteceu 30 e 90 dias depois nas ocasiões parecidas do passado, comparado a um dia qualquer. Repete no máximo a cada 24h.
+- **Linha extra**: os alertas normais de variação trazem uma linha "Leitura do histórico".
+- **Leituras**: FAVORÁVEL (resultado claramente melhor que um dia qualquer nos dois horizontes), SEM VANTAGEM, INCONCLUSIVA, CAUTELA (preço esticado) e NEUTRA.
+
+Resultado da calibração (02/10/2026, dados desde 2017): para o BTC, comprar com 2+ condições teve uma vantagem pequena e instável (pior caso -46%); com 3 condições foi pior que um dia qualquer. Para o ETH, não houve vantagem. Ou seja, "comprar na queda" não é uma regra confiável, e a leitura existe para mostrar isso com números, e não para dar certeza.
