@@ -10,10 +10,15 @@
     "quedaDaMaxima30dPct": 20
   },
   "ativos": [
-    { "simbolo": "BTC", "tipo": "cripto", "par": "BTCUSDT" },
-    { "simbolo": "ETH", "tipo": "cripto", "par": "ETHUSDT" },
-    { "simbolo": "PETR4", "tipo": "acao", "ticker": "PETR4.SA" },
-    { "simbolo": "VALE3", "tipo": "acao", "ticker": "VALE3.SA" },
-    { "simbolo": "AAPL", "tipo": "acao", "ticker": "AAPL" }
+    {
+      "simbolo": "BTC",
+      "tipo": "cripto",
+      "par": "BTCUSDT"
+    },
+    {
+      "simbolo": "ETH",
+      "tipo": "cripto",
+      "par": "ETHUSDT"
+    }
   ]
 }
