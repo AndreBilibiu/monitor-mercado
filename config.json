@@ -1,0 +1,19 @@
+{
+  "intervaloMinutos": 5,
+  "cooldownHoras": 6,
+  "usarClaude": true,
+  "modeloClaude": "claude-haiku-4-5-20251001",
+  "regras": {
+    "variacao24hPct": 5,
+    "rsiBaixo": 30,
+    "rsiAlto": 70,
+    "quedaDaMaxima30dPct": 20
+  },
+  "ativos": [
+    { "simbolo": "BTC", "tipo": "cripto", "par": "BTCUSDT" },
+    { "simbolo": "ETH", "tipo": "cripto", "par": "ETHUSDT" },
+    { "simbolo": "PETR4", "tipo": "acao", "ticker": "PETR4.SA" },
+    { "simbolo": "VALE3", "tipo": "acao", "ticker": "VALE3.SA" },
+    { "simbolo": "AAPL", "tipo": "acao", "ticker": "AAPL" }
+  ]
+}
