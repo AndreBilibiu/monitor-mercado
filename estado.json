@@ -1,12 +1,8 @@
 {
-  "ETH:queda24h": 1792911414035,
-  "BTC:queda24h": 1792878028909,
+  "ETH:queda24h": 1792972000615,
+  "BTC:queda24h": 1792972000615,
   "BTC:alta24h": 1792946416093,
   "ETH:alta24h": 1792946416093,
   "ETH:queda24hMedia": 1792687940798,
-  "ETH:alta24hMedia": 1792149677152,
-  "alvo:BTCBRL:abaixo:400000": {
-    "avisos": 2,
-    "ultimo": 1792965192473
-  }
+  "ETH:alta24hMedia": 1792149677152
 }
