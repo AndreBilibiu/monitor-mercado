@@ -4,5 +4,8 @@
   "BTC:alta24h": 1793176831577,
   "ETH:alta24h": 1793176831577,
   "ETH:queda24hMedia": 1792687940798,
-  "ETH:alta24hMedia": 1792149677152
+  "ETH:alta24hMedia": 1792149677152,
+  "sinal:ETH:2": 1793327597378,
+  "ETH:rsiBaixo": 1793327597378,
+  "ETH:distMaxima": 1793327597378
 }
