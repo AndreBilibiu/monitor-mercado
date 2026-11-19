@@ -6,17 +6,17 @@
   "ETH:queda24hMedia": 1794683789365,
   "ETH:alta24hMedia": 1793847239760,
   "sinal:ETH:2": 1794574428476,
-  "ETH:rsiBaixo": 1795106761019,
-  "ETH:distMaxima": 1795106761019,
+  "ETH:rsiBaixo": 1795130192616,
+  "ETH:distMaxima": 1795130192616,
   "BTC:alta24hMedia": 1793847239760,
   "BTC:queda24hMedia": 1794683789365,
-  "BTC:rsiBaixo": 1795106761019,
+  "BTC:rsiBaixo": 1795130192616,
   "sinal:BTC:2": 1794665961284,
   "alvo:BTCBRL:abaixo:400000": {
     "avisos": 6,
     "ultimo": 1794683789365
   },
-  "BTC:distMaxima": 1795106761019,
+  "BTC:distMaxima": 1795130192616,
   "sinal:ETH:3": 1795047098958,
   "sinal:BTC:3": 1795106761019
 }
